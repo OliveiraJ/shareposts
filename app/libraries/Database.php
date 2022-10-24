@@ -17,7 +17,7 @@ class Database {
     private $stmt;
     private $error;
 
-    public function __cunstruct() {
+    public function __construct() {
         $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname;
         $options = array(
             PDO::ATTR_PERSISTENT => true,
