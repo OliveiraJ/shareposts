@@ -51,6 +51,7 @@ class Users extends Controller {
                 $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
 
                 if ($this->userModel->register($data)) {
+                    flash('register_success', 'You are registered and can log in');
                     redirect('users/login');
                 } else {
                     die('Something went wrong');
@@ -95,8 +96,21 @@ class Users extends Controller {
                 $data['password_error'] = 'Password must be at least 6 characters';
             }
 
+            if ($this->userModel->findUserByEmail($data['email'])) {
+            } else {
+                $data['email_error'] = 'No user found';
+            }
+
             if (empty($data['email_error']) && empty($data['password_error'])) {
-                die('SUCCESS');
+
+                $loggedInUser = $this->userModel->login($data['email'], $data['password']);
+
+                if ($loggedInUser) {
+                    $this->createUserSession($loggedInUser);
+                } else {
+                    $data['password_error'] = 'Password incorrect';
+                    $this->view('users/login', $data);
+                }
             } else {
                 $this->view('users/login', $data);
             }
@@ -108,6 +122,31 @@ class Users extends Controller {
                 'password_error' => '',
             ];
             $this->view('users/login', $data);
+        }
+    }
+
+    public function createUserSession($user) {
+        $_SESSION['user_id'] = $user->id;
+        $_SESSION['user_email'] = $user->email;
+        $_SESSION['user_name'] = $user->name;
+
+        redirect('pages/index');
+    }
+
+    public function logout() {
+        unset($_SESSION['user_id']);
+        unset($_SESSION['user_email']);
+        unset($_SESSION['user_name']);
+        session_destroy();
+
+        redirect('users/login');
+    }
+
+    public function isLoggedIn() {
+        if (isset($_SESSION['user_id'])) {
+            return true;
+        } else {
+            return false;
         }
     }
 }
